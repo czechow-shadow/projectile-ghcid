@@ -1,13 +1,17 @@
 ;;; projectile-ghcid -- Launch ghcid from your projectile root
 
+;; FIXME: make this one a customizable setting...
+(setq ghcid-height 50)
+
 (define-minor-mode ghcid-mode
   "A minor mode for ghcid terminals"
   :lighter " ghcid"
   (compilation-minor-mode))
 
-(defun ghcid-command ()
-  "The command used to run ghcid."
-  "ghcid\n")
+;; FIXME: throw this one away
+;; (defun ghcid-command ()
+;;   "The command used to run ghcid."
+;;   "ghcid\n")
 
 (defun get-or-create-ghcid-buffer (buf-name)
   "Select the buffer with name BUF-NAME."
@@ -19,15 +23,29 @@
        (window-height . ghcid-height)))
     (select-window (get-buffer-window ghcid-buf))))
 
+(defun find-shell-nix ()
+  "Find shell.nix file in the project dirs"
+  (projectile-locate-dominating-file "." "shell.nix"))
+
+
 (defun spawn-ghcid (buf-name)
   "Spawn ghcid inside the current buffer with BUF-NAME."
-  (make-term (format "ghcid: %s" (projectile-project-name)) "/bin/bash")
+  (let ((shell-nix (find-shell-nix))) ;; FIXME: overkill here?
+    (if shell-nix
+	(make-term (format "ghcid: %s" (projectile-project-name))
+		   "nix-shell" nil "--run"
+		   (concat "ghcid -h " (number-to-string ghcid-height)
+			   " --restart *.cabal --restart .ghcid"))
+      (make-term (format "ghcid: %s" (projectile-project-name)) "ghcid")))
+
   (term-mode)
   (term-line-mode)
-  (setq-local scroll-down-aggressively 1)
+  (setq-local scroll-up-aggressively 1)
   (setq-local window-point-insertion-type t)
-  (ghcid-mode)
-  (comint-send-string buf-name (ghcid-command)))
+  (setq-local term-buffer-maximum-size ghcid-height)
+  (ghcid-mode))
+  ;; (comint-send-string buf-name (ghcid-command)))
+
 
 (defun run-ghcid (buf-name)
   "Run or display a ghcid buffer with the given BUF-NAME."
