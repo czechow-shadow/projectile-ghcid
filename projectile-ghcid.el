@@ -1,8 +1,5 @@
 ;;; projectile-ghcid -- Launch ghcid from your projectile root
 
-;; FIXME: make this one a customizable setting...
-(setq ghcid-height 50)
-
 (define-minor-mode ghcid-mode
   "A minor mode for ghcid terminals"
   :lighter " ghcid"
@@ -12,6 +9,15 @@
 ;; (defun ghcid-command ()
 ;;   "The command used to run ghcid."
 ;;   "ghcid\n")
+(defgroup projectile-ghcid nil
+  "Configuraion group for projectile-ghcid."
+  :group 'tools
+  :group 'convenience)
+
+(defcustom ghcid-height 50
+  "Set ghcid buffer window height."
+  :group 'projectile-ghcid
+  :type 'integer)
 
 (defun get-or-create-ghcid-buffer (buf-name)
   "Select the buffer with name BUF-NAME."
@@ -24,7 +30,7 @@
     (select-window (get-buffer-window ghcid-buf))))
 
 (defun find-shell-nix ()
-  "Find shell.nix file in the project dirs"
+  "Find shell.nix file in the project dirs."
   (projectile-locate-dominating-file "." "shell.nix"))
 
 
@@ -32,11 +38,12 @@
   "Spawn ghcid inside the current buffer with BUF-NAME."
   (let ((shell-nix (find-shell-nix))) ;; FIXME: overkill here?
     (if shell-nix
-	(make-term (format "ghcid: %s" (projectile-project-name))
-		   "nix-shell" nil "--run"
-		   (concat "ghcid -h " (number-to-string ghcid-height)
-			   " --restart *.cabal --restart .ghcid"))
-      (make-term (format "ghcid: %s" (projectile-project-name)) "ghcid")))
+        (make-term (format "ghcid: %s" (projectile-project-name))
+                   "nix-shell" nil "--run"
+                   (concat "ghcid -h " (number-to-string ghcid-height)
+                           " --restart *.cabal --restart .ghcid"))
+      (make-term (format "ghcid: %s" (projectile-project-name))
+                 "ghcid" nil "-h" (number-to-string ghcid-height))))
 
   (term-mode)
   (term-line-mode)
